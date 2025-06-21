@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Clerk } from "@clerk/clerk-js";
   import { onMount } from "svelte";
+  import Typed from 'typed.js';
 
   let user = null;
   let token = "";
@@ -42,6 +43,7 @@
   let currentIndex = 0; // Track which question is being shown
   let quizStarted = false;
   let showMockTest = false;
+  let step = 1; // 1 = subject select, 2 = question count, 3 = quiz
 
 function startTimer() {
   timeLeft = count * 72; // 2 minutes per question
@@ -68,7 +70,8 @@ function startTimer() {
     "Science & Technology",
     "Environment & Ecology",
     "Current Affairs",
-    "Previous Year Questions"
+    "Previous Year Questions",
+    "Physics" // <-- add this
   ];
 
 async function fetchQuestions() {
@@ -130,12 +133,40 @@ function resetQuiz() {
 }
 
 
+  let typedElement: HTMLSpanElement;
+
+  onMount(() => {
+    const typed = new Typed(typedElement, {
+      strings: [
+        "Crack UPSC with confidence.",
+        "Practice. Analyze. Improve.",
+        "Daily mock tests. Real results."
+      ],
+      typeSpeed: 50,
+      backSpeed: 30,
+      loop: true
+    });
+
+    return () => typed.destroy();
+  });
 </script>
+
+<!-- MathJax config and script for LaTeX rendering -->
+<script>
+  MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <!-- Header Bar: Centered page name and auth buttons -->
 <nav class="main-nav">
   <div class="nav-content">
-    <div class="nav-title">🧑‍🎓 UPSC Master</div>
+    <div class="nav-title">
+      <span style="font-size:1.7rem;vertical-align:middle;">🎓</span>
+      UPSC Master
+    </div>
     <div class="nav-auth">
       {#if user}
         <span>👋 {user.firstName}</span>
@@ -147,25 +178,30 @@ function resetQuiz() {
   </div>
 </nav>
 
-{#if !quizStarted && !submitted && !showMockTest}
-  <div class="info-landing">
-    <div class="info-card">
-      <h1>Welcome to UPSC Master!</h1>
-      <p>
-        <b>UPSC Master</b> is your one-stop platform for practicing high-quality, exam-oriented mock tests for the UPSC Civil Services Preliminary Exam.
-      </p>
-      <ul>
-        <li>📝 Practice subject-wise and full-length mock tests.</li>
-        <li>📊 Get instant feedback and explanations for every answer.</li>
-        <li>⏱️ Simulate real exam conditions with a timer and progress tracking.</li>
-        <li>🏆 Track your performance and compare with others on the leaderboard.</li>
-        <li>🔒 Sign in to save your progress and access advanced features.</li>
-      </ul>
-      <p>
-        <b>Why use UPSC Master?</b><br>
-        Practicing with realistic questions and explanations is the best way to boost your confidence and improve your score. Whether you are a beginner or a seasoned aspirant, our platform adapts to your needs.
-      </p>
-      <button class="start-btn" on:click={() => showMockTest = true}>Start Practicing</button>
+{#if step === 1}
+  <div class="subjects-landing">
+    <div class="subjects-section">
+      <h2 class="subjects-title">Choose a Subject</h2>
+      <div class="subjects-grid">
+        {#each subjects as s}
+          <div
+            class="subject-card {subject === s ? 'selected' : ''}"
+            on:click={() => { subject = s; step = 2; }}
+          >
+            {s}
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
+{:else if step === 2}
+  <div class="subjects-landing">
+    <div class="subjects-section">
+      <h2 class="subjects-title">How many questions?</h2>
+      <div class="question-count-select">
+        <input type="number" min="1" max="100" bind:value={count} class="question-count-input" />
+        <button class="start-btn" on:click={() => { step = 3; fetchQuestions(); }}>Start Quiz</button>
+      </div>
     </div>
   </div>
 {:else}
@@ -183,7 +219,7 @@ function resetQuiz() {
         <span class="q-timer">⏰ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
       </div>
       <div class="question-block">
-        <div class="question-text">{questions[currentIndex].question}</div>
+        <div class="question-text">{@html questions[currentIndex].question}</div>
         <div class="options">
           {#each questions[currentIndex].options as opt, idx}
             <label class="option-box {answers[currentIndex] === opt ? 'selected' : ''}">
@@ -248,41 +284,58 @@ function resetQuiz() {
   </div>
 </footer>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
 <style>
   :global(body) {
+  font-family: 'Inter', 'Space Grotesk', Arial, sans-serif;
+  background: #111;
+  color: #f3f4f6;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  letter-spacing: 0.01em;
+}
+
+  :global(body) {
   font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
   color: #232526;
   margin: 0;
   padding: 0;
+  min-height: 100vh;
 }
 
 .main-nav {
   width: 100vw;
-  background: #fff;
-  border-bottom: 1.5px solid #e6e6e6;
-  box-shadow: 0 2px 8px #0001;
+  background: #111;
+  border-bottom: 1px solid #222;
+  box-shadow: none;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 100;
 }
 .nav-content {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: 64px;
   padding: 0 2rem;
 }
 .nav-title {
-  font-size: 1.5rem;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.7rem;
   font-weight: 700;
-  color: #424245;
+  color: #fff;
   letter-spacing: 1px;
   text-align: center;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 .nav-auth {
   display: flex;
@@ -290,17 +343,17 @@ function resetQuiz() {
   gap: 1rem;
 }
 .nav-auth button {
-  background: #424245;
+  background: #222;
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.4rem 1.1rem;
-  font-weight: bold;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
   font-size: 1rem;
   transition: background 0.2s;
 }
 .nav-auth button:hover {
-  background: #232526;
+  background: #333;
 }
 .nav-auth span {
   color: #232526;
@@ -448,19 +501,26 @@ function resetQuiz() {
 .quiz-setup-actions select:focus {
   border: 1.5px solid #424245;
 }
-.start-btn {
-  background: #232526;
+.start-btn,
+.quiz-controls button,
+.q-actions button,
+.submit-btn {
+  background: linear-gradient(90deg, #6366f1 0%, #06b6d4 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.7rem 2rem;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 600;
-  transition: background 0.2s;
-  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px #6366f122;
 }
-.start-btn:hover {
-  background: #424245;
+.start-btn:hover,
+.quiz-controls button:hover,
+.q-actions button:hover:not(:disabled),
+.submit-btn:hover {
+  background: linear-gradient(90deg, #06b6d4 0%, #6366f1 100%);
+  box-shadow: 0 4px 16px #6366f144;
 }
 
 .progress-bar {
@@ -470,20 +530,26 @@ function resetQuiz() {
   margin-top: 60px;
 }
 .progress {
-  background: #424245;
+  background: linear-gradient(90deg, #6366f1 0%, #06b6d4 100%);
   height: 100%;
   border-radius: 3px;
-  transition: width 0.3s;
+  transition: width 0.5s cubic-bezier(.4,2.3,.3,1);
 }
 
 .main-card {
-  max-width: 900px;
+  max-width: 700px;
   margin: 90px auto 4.5rem auto;
-  background: #fff;
-  border-radius: 12px;
-  border: 1.5px solid #e6e6e6;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  background: #18181b;
+  border-radius: 18px;
+  border: 1.5px solid #222;
+  box-shadow: none;
   padding: 2.5rem 2rem 2rem 2rem;
+  color: #fff;
+  animation: fadeIn 0.7s cubic-bezier(.4,2.3,.3,1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
 }
 
 .question-header {
@@ -491,13 +557,30 @@ function resetQuiz() {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 500;
-  color: #232526;
+  color: #fff;
 }
-.q-title { font-weight: 600; }
-.q-subject { color: #888; font-size: 1rem; }
-.q-timer { color: #424245; font-weight: 600; }
+.q-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+.q-subject {
+  color: #22c55e;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.q-timer {
+  color: #fff;
+  background: #18181b;
+  border: 1.5px solid #22c55e;
+  padding: 0.3rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
 
 .quiz-controls {
   display: flex;
@@ -535,18 +618,20 @@ function resetQuiz() {
 }
 
 .question-block {
-  background: #fff;
-  color: #232526;
-  border-radius: 12px;
-  border: 1.5px solid #e6e6e6;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: #111;
+  color: #fff;
+  border-radius: 14px;
+  border: 1.5px solid #222;
+  box-shadow: none;
   padding: 2rem 1.5rem;
   margin-bottom: 2rem;
 }
 .question-text {
-  font-size: 1.18rem;
-  font-weight: 600;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
   margin-bottom: 1.5rem;
+  color: #fff;
 }
 .options {
   display: flex;
@@ -556,29 +641,31 @@ function resetQuiz() {
 .option-box {
   display: flex;
   align-items: center;
-  background: #f8f9fa;
-  border: 1.5px solid #e6e6e6;
+  background: #18181b;
+  border: 1.5px solid #222;
   border-radius: 8px;
-  padding: 0.8rem 1rem;
+  padding: 1rem 1.2rem;
   cursor: pointer;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  transition: border 0.2s, background 0.2s;
+  transition: border 0.2s, background 0.2s, color 0.2s;
   user-select: none;
+  color: #fff;
 }
 .option-box.selected,
 .option-box:hover {
-  border: 1.5px solid #424245;
-  background: #f1f2f6;
+  border: 1.5px solid #22c55e;
+  background: #22c55e22;
+  color: #22c55e;
 }
 .option-box input[type="radio"] {
   margin-right: 1rem;
-  accent-color: #424245;
+  accent-color: #22c55e;
 }
 .option-letter {
   font-weight: bold;
   margin-right: 0.7rem;
-  color: #424245;
+  color: #22c55e;
 }
 
 .q-actions {
@@ -589,23 +676,26 @@ function resetQuiz() {
 }
 .q-actions button,
 .submit-btn {
-  background: #424245;
-  color: #fff;
+  background: #22c55e;
+  color: #111;
   border: none;
   border-radius: 8px;
-  padding: 0.6rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background 0.2s;
+  padding: 0.7rem 1.7rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  transition: background 0.2s, color 0.2s, transform 0.13s;
 }
 .q-actions button:disabled {
-  background: #e6e6e6;
-  color: #aaa;
+  background: #222;
+  color: #888;
   cursor: not-allowed;
 }
 .q-actions button:hover:not(:disabled),
 .submit-btn:hover {
-  background: #232526;
+  background: #16a34a;
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
 }
 
 .review-answer {
@@ -637,8 +727,8 @@ function resetQuiz() {
 
 .footer-bar {
   width: 100vw;
-  background: #fff;
-  color: #232526;
+  <span style="color:#22c55e;">Your highlighted text</span>  background: #111;
+  color: #888;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -649,76 +739,234 @@ function resetQuiz() {
   left: 0;
   bottom: 0;
   border-radius: 18px 18px 0 0;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  box-shadow: none;
+  backdrop-filter: none;
   z-index: 100;
   text-align: center;
 }
-.footer-bar > div {
-  margin: 0.2rem 0;
-}
 .footer-bar a {
-  color: #424245;
+  color: #22c55e;
   text-decoration: underline;
   margin: 0 0.5rem;
   transition: color 0.2s;
 }
 .footer-bar a:hover {
-  color: #232526;
+  color: #fff;
 }
 
 .info-landing {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    padding-top: 80px;
-    padding-bottom: 60px;
-  }
-  .info-card {
-    background: #e6e6e6;
-    border-radius: 14px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    padding: 2.5rem 2.5rem 2rem 2.5rem;
-    max-width: 540px;
-    margin: 0 auto;
-    text-align: center;
-    border: 1.5px solid #d1d1d1;
-  }
-  .info-card h1 {
-    font-size: 2.1rem;
-    font-weight: 700;
-    margin-bottom: 1.2rem;
-    color: #232526;
-  }
-  .info-card ul {
-    text-align: left;
-    margin: 1.2rem 0 1.2rem 1.2rem;
-    padding: 0;
-    color: #232526;
-    font-size: 1.08rem;
-  }
-  .info-card li {
-    margin-bottom: 0.7rem;
-  }
-  .info-card p {
-    color: #232526;
-    font-size: 1.08rem;
-    margin-bottom: 1.2rem;
-  }
-  .info-card .start-btn {
-    background: #232526;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.7rem 2rem;
-    font-size: 1.08rem;
-    font-weight: 600;
-    transition: background 0.2s;
-    cursor: pointer;
-    margin-top: 1.2rem;
-  }
-  .info-card .start-btn:hover {
-    background: #424245;
-  }
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #0f172a;
+  padding-top: 80px;
+  padding-bottom: 60px;
+  flex-direction: column;
+}
+.info-card {
+  background: #e6e6e6;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  max-width: 540px;
+  margin: 0 auto;
+  text-align: center;
+  border: 1.5px solid #d1d1d1;
+  animation: fadeIn 1s cubic-bezier(.4,2.3,.3,1);
+}
+.info-card h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #232526;
+}
+.info-card ul {
+  text-align: left;
+  margin: 1.2rem 0 1.2rem 1.2rem;
+  padding: 0;
+  color: #232526;
+  font-size: 1.08rem;
+}
+.info-card li {
+  margin-bottom: 0.7rem;
+}
+.info-card p {
+  color: #232526;
+  font-size: 1.08rem;
+  margin-bottom: 1.2rem;
+}
+.info-card .start-btn {
+  background: #232526;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  transition: background 0.2s;
+  cursor: pointer;
+  margin-top: 1.2rem;
+}
+.info-card .start-btn:hover {
+  background: #424245;
+}
+
+.subjects-section {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.subjects-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.subjects-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.subject-card {
+  min-width: 180px;
+  min-height: 80px;
+  background: #18181b;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 14px;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 
+    background 0.18s,
+    color 0.18s,
+    transform 0.13s;
+  border: 2px solid #222;
+  padding: 0 2rem;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+.subject-card:hover,
+.subject-card.selected {
+  background: #22c55e;
+  color: #111;
+  border: 2px solid #22c55e;
+  transform: translateY(-4px) scale(1.04);
+}
+
+.question-count-select {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+.question-count-input {
+  background: #18181b;
+  color: #fff;
+  border: 2px solid #222;
+  border-radius: 10px;
+  padding: 1rem 2rem;  <span style="color:#22c55e;">Your highlighted text</span>
+  font-size: 1.3rem;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  width: 130px;
+  text-align: center;
+  outline: none;
+  transition: border 0.2s;
+}
+.question-count-input:focus {
+  border: 2px solid #22c55e;
+}
+.start-btn {
+  background: #22c55e;
+  color: #111;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 2.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.13s;
+  box-shadow: none;
+  letter-spacing: 0.01em;
+}
+.start-btn:hover {
+  background: #16a34a;
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+}
+
+.info-card {
+  background: #e6e6e6;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  max-width: 540px;
+  margin: 0 auto;
+  text-align: center;
+  border: 1.5px solid #d1d1d1;
+  animation: fadeIn 1s cubic-bezier(.4,2.3,.3,1);
+}
+.info-card h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #232526;
+}
+.info-card ul {
+  text-align: left;
+  margin: 1.2rem 0 1.2rem 1.2rem;
+  padding: 0;
+  color: #232526;
+  font-size: 1.08rem;
+}
+.info-card li {
+  margin-bottom: 0.7rem;
+}
+.info-card p {
+  color: #232526;
+  font-size: 1.08rem;
+  margin-bottom: 1.2rem;
+}
+.info-card .start-btn {
+  background: #232526;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  transition: background 0.2s;
+  cursor: pointer;
+  margin-top: 1.2rem;
+}
+.info-card .start-btn:hover {
+  background: #424245;
+}
 </style>
+
+<div class="info-card">
+  <h1>Welcome to UPSC Master!</h1>
+  <h2 style="margin-top: 0.5rem; font-weight: normal; color: #424245;">
+    <span bind:this={typedElement}></span>
+  </h2>
+</div>
