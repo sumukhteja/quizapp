@@ -88,6 +88,13 @@ async function fetchQuestions() {
     quizStarted = true;     // 🔥 Start quiz UI
     currentIndex = 0;
     startTimer();
+
+    setTimeout(() => {
+  if (window.MathJax && window.MathJax.typeset) {
+    window.MathJax.typeset();
+  }
+}, 0);
+
   } catch (err: any) {
     error = err.message || "Unknown error";
     questions = [];
