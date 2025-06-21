@@ -78,22 +78,23 @@ async function fetchQuestions() {
   loading = true;
   submitted = false;
   error = "";
+
   try {
     const res = await fetch(
-      `https://backend.sunny-vanamala4.workers.dev/api/questions?subject=${encodeURIComponent(subject)}&count=${count}`
+      `https://your-api-url/api/questions?subject=${encodeURIComponent(subject)}&count=${count}`
     );
     if (!res.ok) throw new Error("Failed to fetch questions");
+
     questions = await res.json();
     answers = {};
-    quizStarted = true;     // 🔥 Start quiz UI
+    quizStarted = true;
     currentIndex = 0;
     startTimer();
 
+    // ✅ Trigger MathJax after question injection
     setTimeout(() => {
-  if (window.MathJax && window.MathJax.typeset) {
-    window.MathJax.typeset();
-  }
-}, 0);
+      MathJax.typeset?.();
+    }, 0);
 
   } catch (err: any) {
     error = err.message || "Unknown error";
@@ -102,6 +103,7 @@ async function fetchQuestions() {
     loading = false;
   }
 }
+
 
   async function submitAnswers() {
   clearInterval(timerInterval); // Stop timer on submit
