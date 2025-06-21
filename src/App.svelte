@@ -80,9 +80,7 @@ async function fetchQuestions() {
   error = "";
 
   try {
-    const res = await fetch(
-      `https://your-api-url/api/questions?subject=${encodeURIComponent(subject)}&count=${count}`
-    );
+    const res = await fetch(`/api/questions?subject=${subject}&count=${count}`);
     if (!res.ok) throw new Error("Failed to fetch questions");
 
     questions = await res.json();
@@ -91,19 +89,17 @@ async function fetchQuestions() {
     currentIndex = 0;
     startTimer();
 
-    // ✅ Trigger MathJax after question injection
+    // 🔥 Trigger MathJax to render LaTeX
     setTimeout(() => {
       MathJax.typeset?.();
     }, 0);
 
-  } catch (err: any) {
-    error = err.message || "Unknown error";
-    questions = [];
+  } catch (err) {
+    error = err.message || "Failed to load questions.";
   } finally {
     loading = false;
   }
 }
-
 
   async function submitAnswers() {
   clearInterval(timerInterval); // Stop timer on submit
@@ -158,6 +154,16 @@ function resetQuiz() {
 
     return () => typed.destroy();
   });
+
+  function formatTime(t: number) {
+    const m = Math.floor(t / 60);
+    const s = String(t % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function selectOption(opt: string) {
+    answers[currentIndex] = opt;
+  }
 </script>
 
 <!-- Header Bar: Centered page name and auth buttons -->
@@ -213,30 +219,36 @@ function resetQuiz() {
 
   <div class="main-card">
     {#if questions.length && !submitted}
-      <div class="question-header">
-        <span class="q-title">Question {currentIndex + 1} of {questions.length}</span>
-        <span class="q-subject">{subject}</span>
-        <span class="q-timer">⏰ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
-      </div>
-      <div class="question-block">
-        <div class="question-text">{@html questions[currentIndex].question}</div>
-        <div class="options">
-          {#each questions[currentIndex].options as opt, idx}
-            <label class="option-box {answers[currentIndex] === opt ? 'selected' : ''}">
-              <input type="radio" name={"q" + currentIndex} value={opt} bind:group={answers[currentIndex]} />
-              <span class="option-letter">{String.fromCharCode(65 + idx)}.</span>
-              <span>{opt}</span>
-            </label>
+      <!-- Question Display -->
+      <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <div class="text-sm text-gray-500 mb-2">
+          Question {currentIndex + 1} of {questions.length} · {subject} · ⏰ {formatTime(timeLeft)}
+        </div>
+
+        <div class="text-xl font-semibold mb-4">
+          {@html questions[currentIndex]?.question}
+        </div>
+
+        <div class="space-y-2">
+          {#each questions[currentIndex]?.options as option, i}
+            <button
+              class="block w-full text-left px-4 py-2 rounded-lg border border-gray-300 hover:bg-blue-50"
+              on:click={() => selectOption(String.fromCharCode(65 + i))}
+              class:selected={answers[currentIndex] === String.fromCharCode(65 + i)}
+            >
+              <span class="font-bold">{String.fromCharCode(65 + i)}.</span>
+              <span class="ml-2" {@html option}></span>
+            </button>
           {/each}
         </div>
-        <div class="q-actions">
-          <button on:click={() => currentIndex--} disabled={currentIndex === 0}>Previous</button>
-          {#if currentIndex < questions.length - 1}
-            <button on:click={() => currentIndex++}>Next Question</button>
-          {:else}
-            <button class="submit-btn" on:click={submitAnswers}>Submit Quiz</button>
-          {/if}
-        </div>
+      </div>
+      <div class="q-actions">
+        <button on:click={() => currentIndex--} disabled={currentIndex === 0}>Previous</button>
+        {#if currentIndex < questions.length - 1}
+          <button on:click={() => currentIndex++}>Next Question</button>
+        {:else}
+          <button class="submit-btn" on:click={submitAnswers}>Submit Quiz</button>
+        {/if}
       </div>
     {:else if !submitted}
       <div class="quiz-controls">
