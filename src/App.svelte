@@ -2,7 +2,7 @@
   import { Clerk } from "@clerk/clerk-js";
   import { onMount } from "svelte";
   import Typed from 'typed.js';
-  import { tick } from "svelte"; // make sure this is at the top
+  import { tick } from "svelte";
 
   let user = null;
   let token = "";
@@ -178,6 +178,19 @@ function resetQuiz() {
   async function prevQuestion() {
     currentIndex--;
     await renderMath();
+  }
+
+  // Add this function definition
+  async function renderMath() {
+    await tick();
+    // Check if MathJax is available globally
+    if (window.MathJax) {
+      try {
+        await window.MathJax.typesetPromise();
+      } catch (err) {
+        console.error('MathJax error:', err);
+      }
+    }
   }
 </script>
 
@@ -754,7 +767,7 @@ function resetQuiz() {
 
 .footer-bar {
   width: 100vw;
-  <span style="color:#22c55e;">Your highlighted text</span>  background: #111;
+  background: #111;
   color: #888;
   display: flex;
   flex-direction: column;
@@ -912,7 +925,7 @@ function resetQuiz() {
   color: #fff;
   border: 2px solid #222;
   border-radius: 10px;
-  padding: 1rem 2rem;  <span style="color:#22c55e;">Your highlighted text</span>
+  padding: 1rem 2rem;
   font-size: 1.3rem;
   font-family: 'Space Grotesk', 'Inter', sans-serif;
   width: 130px;
