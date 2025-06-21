@@ -81,25 +81,22 @@ async function fetchQuestions() {
   error = "";
 
   try {
-const res = await fetch(`/api/questions?subject=${subject}&count=${count}`);
-
+    const res = await fetch(`https://backend.sunny-vanamala4.workers.dev/api/questions?subject=${subject}&count=${count}`);
+    
     if (!res.ok) {
-  const html = await res.text();  // <-- get full error response
-  console.error("Unexpected HTML response:", html);
-  throw new Error("Failed to fetch questions");
-}
+      const errorText = await res.text();
+      console.error("API Error:", errorText);
+      throw new Error("Failed to fetch questions");
+    }
 
     questions = await res.json();
     answers = {};
     quizStarted = true;
     currentIndex = 0;
     startTimer();
-
-    // ✅ Trigger MathJax after DOM update
-    await tick();
-    if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
-      await window.MathJax.typesetPromise();
-    }
+    
+    // Render math after questions load
+    await renderMath();
 
   } catch (err) {
     console.error(err);
@@ -171,6 +168,16 @@ function resetQuiz() {
 
   function selectOption(opt: string) {
     answers[currentIndex] = opt;
+  }
+
+  async function nextQuestion() {
+    currentIndex++;
+    await renderMath();
+  }
+
+  async function prevQuestion() {
+    currentIndex--;
+    await renderMath();
   }
 </script>
 
