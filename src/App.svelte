@@ -237,7 +237,7 @@ function resetQuiz() {
               class:selected={answers[currentIndex] === String.fromCharCode(65 + i)}
             >
               <span class="font-bold">{String.fromCharCode(65 + i)}.</span>
-              <span class="ml-2" {@html option}></span>
+              <span class="ml-2">{@html option}</span>
             </button>
           {/each}
         </div>
