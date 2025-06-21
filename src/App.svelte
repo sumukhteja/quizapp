@@ -151,15 +151,6 @@ function resetQuiz() {
   });
 </script>
 
-<!-- MathJax config and script for LaTeX rendering -->
-<script>
-  MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-    svg: { fontCache: 'global' }
-  };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 <!-- Header Bar: Centered page name and auth buttons -->
 <nav class="main-nav">
   <div class="nav-content">
