@@ -2,6 +2,7 @@
   import { Clerk } from "@clerk/clerk-js";
   import { onMount } from "svelte";
   import Typed from 'typed.js';
+  import { tick } from "svelte"; // make sure this is at the top
 
   let user = null;
   let token = "";
@@ -81,7 +82,12 @@ async function fetchQuestions() {
 
   try {
     const res = await fetch(`/api/questions?subject=${subject}&count=${count}`);
-    if (!res.ok) throw new Error("Failed to fetch questions");
+
+    if (!res.ok) {
+      const text = await res.text(); // Helpful for debugging
+      console.error("Failed response:", text);
+      throw new Error("Failed to fetch questions");
+    }
 
     questions = await res.json();
     answers = {};
@@ -89,12 +95,14 @@ async function fetchQuestions() {
     currentIndex = 0;
     startTimer();
 
-    // 🔥 Trigger MathJax to render LaTeX
-    setTimeout(() => {
-      MathJax.typeset?.();
-    }, 0);
+    // ✅ Trigger MathJax after DOM update
+    await tick();
+    if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
+      await window.MathJax.typesetPromise();
+    }
 
   } catch (err) {
+    console.error(err);
     error = err.message || "Failed to load questions.";
   } finally {
     loading = false;
