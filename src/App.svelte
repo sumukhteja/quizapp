@@ -81,13 +81,13 @@ async function fetchQuestions() {
   error = "";
 
   try {
-    const res = await fetch(`/api/questions?subject=${subject}&count=${count}`);
+const res = await fetch(`/api/questions?subject=${subject}&count=${count}`);
 
     if (!res.ok) {
-      const text = await res.text(); // Helpful for debugging
-      console.error("Failed response:", text);
-      throw new Error("Failed to fetch questions");
-    }
+  const html = await res.text();  // <-- get full error response
+  console.error("Unexpected HTML response:", html);
+  throw new Error("Failed to fetch questions");
+}
 
     questions = await res.json();
     answers = {};
