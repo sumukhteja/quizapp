@@ -107,8 +107,8 @@ async function fetchQuestions() {
 }
 
   async function submitAnswers() {
-  clearInterval(timerInterval); // Stop timer on submit
-
+  clearInterval(timerInterval);
+  
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     const selected = answers[i];
@@ -118,7 +118,7 @@ async function fetchQuestions() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}` // 🔐 Attach the Clerk JWT
+        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify({
         subject,
@@ -130,8 +130,10 @@ async function fetchQuestions() {
   }
 
   submitted = true;
+  // Add this line to rerender math after showing review
+  await tick();
+  await renderMath();
 }
-
 
 function resetQuiz() {
   quizStarted = false;
@@ -183,9 +185,12 @@ function resetQuiz() {
   // Add this function definition
   async function renderMath() {
     await tick();
-    // Check if MathJax is available globally
     if (window.MathJax) {
       try {
+        // Reset MathJax state
+        window.MathJax.texReset();
+        // Process all math in the document
+        await window.MathJax.typesetClear();
         await window.MathJax.typesetPromise();
       } catch (err) {
         console.error('MathJax error:', err);
@@ -302,12 +307,16 @@ function resetQuiz() {
       <h2 style="text-align:center; color:#424245;">📘 Review with Explanations</h2>
       {#each questions as q, i}
         <div class="question-block">
-          <div class="question-text">{i + 1}. {q.question}</div>
+          <div class="question-text">
+            {i + 1}. {@html q.question}
+          </div>
           <div class="review-answer">
             <span>🟡 Your Answer: {answers[i] !== undefined ? answers[i] : "Not attempted"}</span>
             <span>✅ Correct Answer: {q.correct_option}</span>
           </div>
-          <div class="explanation">📖 {q.explanation}</div>
+          <div class="explanation">
+            📖 {@html q.explanation}
+          </div>
         </div>
       {/each}
       <button class="submit-btn" on:click={resetQuiz} style="margin-top: 2rem;">🆕 Take Another Test</button>
